@@ -1,7 +1,9 @@
 package httpclient
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/tccav/student-creator-dispatcher/pkg/domain/students"
@@ -26,7 +28,17 @@ func (s StudentsClient) Register(ctx context.Context, input students.RegisterInp
 		return err
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, u.String(), nil)
+	postStudentsReq, err := FromRegisterInput(input)
+	if err != nil {
+		return err
+	}
+
+	bodyBytes, err := json.Marshal(postStudentsReq)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, u.String(), bytes.NewReader(bodyBytes))
 	if err != nil {
 		return err
 	}
@@ -38,7 +50,14 @@ func (s StudentsClient) Register(ctx context.Context, input students.RegisterInp
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		// TODO: handle errors
+		var serviceErr ServiceErrorResp
+
+		err = json.NewDecoder(resp.Body).Decode(&serviceErr)
+		if err != nil {
+			return err
+		}
+
+		return NewHTTPError(u.RequestURI(), serviceErr.Message, serviceErr.Status)
 	}
 
 	return nil

@@ -40,7 +40,14 @@ func (c CoursesClient) GetCourse(ctx context.Context, id string) (students.GetCo
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		// TODO: handle errors
+		var serviceErr ServiceErrorResp
+
+		err = json.NewDecoder(resp.Body).Decode(&serviceErr)
+		if err != nil {
+			return students.GetCourseOutput{}, err
+		}
+
+		return students.GetCourseOutput{}, NewHTTPError(u.RequestURI(), serviceErr.Message, serviceErr.Status)
 	}
 
 	var respBody GetCourseResp
