@@ -43,6 +43,7 @@ func (r RegisterUseCase) RegisterStudent(ctx context.Context, input students.Reg
 		CPF:       input.CPF,
 		Email:     input.Email,
 		BirthDate: input.BirthDate,
+		CourseID:  input.CourseID,
 	})
 	if err != nil {
 		span.RecordError(err)

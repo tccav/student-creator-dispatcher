@@ -11,6 +11,7 @@ import (
 	"github.com/twmb/franz-go/plugin/kotel"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/trace"
 	"go.uber.org/zap"
 
 	"github.com/tccav/student-creator-dispatcher/pkg/config"
@@ -93,6 +94,7 @@ func main() {
 		kgo.SeedBrokers(configs.Kafka.URL()),
 		kgo.WithHooks(kotelService.Hooks()...),
 		kgo.ConsumeTopics("identity.cdc.students.0"),
+		kgo.ConsumerGroup("student-creator-dispatcher"),
 	}
 	if configs.Kafka.User != "" {
 		kOpts = append(kOpts, kgo.SASL(plain.Auth{
@@ -144,9 +146,24 @@ func main() {
 		})
 
 		fetches.EachRecord(func(record *kgo.Record) {
+			span := trace.SpanFromContext(record.Context)
+			span.SpanContext().TraceID()
+
+			recordLogger := logger.With(
+				zap.String("topic", record.Topic),
+				zap.Int32("partition", record.Partition),
+				zap.String("trace_id", span.SpanContext().TraceID().String()),
+			)
+
+			recordLogger.Info("consuming incoming message")
+
 			handlerErr := recordHandler.Handle(record)
 			if handlerErr != nil {
+				recordLogger.Error("failed to consume message", zap.Error(handlerErr))
+				return
 			}
+
+			recordLogger.Info("successfully consumed message")
 		})
 	}
 }

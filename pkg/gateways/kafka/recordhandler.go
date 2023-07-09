@@ -38,8 +38,7 @@ func (h StudentRegisterRecordHandler) Handle(record *kgo.Record) error {
 
 	_, err = h.useCase.RegisterStudent(ctx, event.Payload.toRegisterStudentInput())
 	if err != nil {
-		h.logger.Error("failed to register student", zap.Error(err))
-		return nil
+		return err
 	}
 
 	// TODO: produce event back informing everything ok
