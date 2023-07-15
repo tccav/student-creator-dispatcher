@@ -37,14 +37,7 @@ func (r RegisterUseCase) RegisterStudent(ctx context.Context, input students.Reg
 	}
 
 	// call student service to register student
-	err = r.s.Register(ctx, students.RegisterInput{
-		ID:        input.ID,
-		Name:      input.Name,
-		CPF:       input.CPF,
-		Email:     input.Email,
-		BirthDate: input.BirthDate,
-		CourseID:  input.CourseID,
-	})
+	err = r.s.Register(ctx, students.RegisterInput(input))
 	if err != nil {
 		span.RecordError(err)
 		return "", err

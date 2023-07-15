@@ -5,10 +5,7 @@ import (
 	"errors"
 )
 
-//go:generate moq -out idmocks/mock_usecases.go -pkg idmocks . RegisterUseCases AuthenticationUseCases
-
 var (
-	ErrInvalidCourseID      = errors.New("invalid course id")
 	ErrStudentAlreadyExists = errors.New("student already exists")
 )
 
